@@ -6,7 +6,11 @@
     <groupId>email.kleck.demo</groupId>
     <artifactId>jsainsburyplc-serverside-test</artifactId>
     <version>1.0.0-BUILD-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <modules>
+        <module>Parser</module>
+        <module>Config</module>
+    </modules>
+    <packaging>pom</packaging>
 
     <name>J Sainsbury PLC serverside-test</name>
     <url>https://github.com/JuergenKleck/jsainsburyplc-serverside-test/</url>
@@ -62,6 +66,41 @@
     </properties>
 
     <dependencies>
+
+
+        <!-- Testing -->
+
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <version>1.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+            <version>1.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.6.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
