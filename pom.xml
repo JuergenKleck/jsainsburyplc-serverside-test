@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>email.kleck.demo</groupId>
+    <artifactId>jsainsburyplc-serverside-test</artifactId>
+    <version>1.0.0-BUILD-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>J Sainsbury PLC serverside-test</name>
+    <url>https://github.com/JuergenKleck/jsainsburyplc-serverside-test/</url>
+    <description>Implementation of the serverside-test exercise</description>
+
+    <developers>
+        <developer>
+            <id>JuergenKleck</id>
+            <name>Jürgen Kleck</name>
+            <email>github.juergen@kleck.email</email>
+            <organization>Jürgen Kleck</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <organization>
+        <name>Jürgen Kleck</name>
+        <url>http://kleck.email</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <comments>
+                Copyright 2011 the original author or authors.
+
+                Licensed under the Apache License, Version 2.0 (the "License");
+                you may not use this file except in compliance with the License.
+                You may obtain a copy of the License at
+
+                https://www.apache.org/licenses/LICENSE-2.0
+
+                Unless required by applicable law or agreed to in writing, software
+                distributed under the License is distributed on an "AS IS" BASIS,
+                WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                implied.
+                See the License for the specific language governing permissions and
+                limitations under the License.
+            </comments>
+        </license>
+    </licenses>
+
+    <properties>
+        <java-version>1.8</java-version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
+    </properties>
+
+    <dependencies>
+    </dependencies>
+
+    <build>
+        <finalName>serverside-test</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>
+                                        email.kleck.demo.jsainsburyplc.MainApplication
+                                    </mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+    </profiles>
+
+    <scm>
+        <url>https://github.com/JuergenKleck/jsainsburyplc-serverside-test</url>
+        <connection>scm:git:git://github.com/JuergenKleck/jsainsburyplc-serverside-test.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:JuergenKleck/jsainsburyplc-serverside-test.git</developerConnection>
+    </scm>
+
+</project>
