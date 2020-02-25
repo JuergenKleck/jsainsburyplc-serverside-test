@@ -32,8 +32,8 @@ public final class FileReader {
 
     /**
      * Internal method to read the properties
-     * @param path
-     * @throws IOException
+     * @param path the path of the file to load
+     * @throws IOException in case the file has access problems
      */
     private void readFile(Path path) throws IOException {
         properties = new Properties();
@@ -42,7 +42,7 @@ public final class FileReader {
 
     /**
      * Getter for the properties
-     * @return
+     * @return the loaded properties
      */
     public Properties getProperties() {
         return properties;
