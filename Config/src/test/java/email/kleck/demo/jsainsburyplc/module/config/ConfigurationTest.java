@@ -5,10 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class ConfigurationTest {
-
 
     @Test
     public void givenConfiguration_whenLoaded_thenReturnProperties() {
