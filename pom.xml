@@ -7,8 +7,8 @@
     <artifactId>jsainsburyplc-serverside-test</artifactId>
     <version>1.0.0-BUILD-SNAPSHOT</version>
     <modules>
-        <module>Parser</module>
-        <module>Config</module>
+        <module>parser</module>
+        <module>config</module>
     </modules>
     <packaging>pom</packaging>
 
