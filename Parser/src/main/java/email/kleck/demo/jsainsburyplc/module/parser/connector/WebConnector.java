@@ -12,6 +12,7 @@ public class WebConnector {
 
     /**
      * Read the html contents of a website
+     *
      * @param url the url to read
      * @return the html contents
      * @throws IOException if the connection failed

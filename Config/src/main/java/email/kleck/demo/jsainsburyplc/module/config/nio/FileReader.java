@@ -13,6 +13,7 @@ public final class FileReader {
 
     /**
      * Open a properties file and read the contents into the local variable
+     *
      * @param fileName the name of the file to load
      * @throws FileSystemException in case any failure occurred
      */
@@ -32,6 +33,7 @@ public final class FileReader {
 
     /**
      * Internal method to read the properties
+     *
      * @param path the path of the file to load
      * @throws IOException in case the file has access problems
      */
@@ -42,6 +44,7 @@ public final class FileReader {
 
     /**
      * Getter for the properties
+     *
      * @return the loaded properties
      */
     public Properties getProperties() {
