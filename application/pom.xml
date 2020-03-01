@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>jsainsburyplc-serverside-test</artifactId>
+        <groupId>email.kleck.demo</groupId>
+        <version>1.0.0-BUILD-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>email.kleck.demo</groupId>
+    <artifactId>application</artifactId>
+    <version>1.0.0-BUILD-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>email.kleck.demo</groupId>
+            <artifactId>parser</artifactId>
+            <version>1.0.0-BUILD-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target
+                            </outputDirectory>   <!-- output directory -->
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/resources
+                                    </directory>         <!-- source directory -->
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>
