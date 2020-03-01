@@ -19,7 +19,6 @@ public final class FileReader {
      */
     public void openFile(String fileName) throws FileSystemException {
         Path path = Paths.get(fileName);
-
         if (Files.exists(path)) {
             try {
                 readFile(path);

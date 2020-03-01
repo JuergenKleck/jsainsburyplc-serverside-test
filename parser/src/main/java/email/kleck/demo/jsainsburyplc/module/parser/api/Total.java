@@ -2,8 +2,8 @@ package email.kleck.demo.jsainsburyplc.module.parser.api;
 
 public class Total {
 
-    private Double gross;
-    private Double vat;
+    private Double gross = 0.0;
+    private Double vat = 0.0;
 
     public Double getGross() {
         return gross;
@@ -23,9 +23,9 @@ public class Total {
 
     @Override
     public String toString() {
-        return "Total{" +
-                "gross=" + gross +
-                ", vat=" + vat +
+        return "{" +
+                "\"gross\":" + gross +
+                ", \"vat\":" + vat +
                 '}';
     }
 }

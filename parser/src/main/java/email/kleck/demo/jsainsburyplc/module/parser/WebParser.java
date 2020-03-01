@@ -1,28 +1,24 @@
 package email.kleck.demo.jsainsburyplc.module.parser;
 
 import email.kleck.demo.jsainsburyplc.module.config.ConfigConstants;
-import email.kleck.demo.jsainsburyplc.module.parser.api.JsonResponse;
-import email.kleck.demo.jsainsburyplc.module.parser.api.Result;
 import email.kleck.demo.jsainsburyplc.module.parser.internal.Node;
 import email.kleck.demo.jsainsburyplc.module.parser.internal.Tree;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Properties;
 
 /**
  * The entry class to parse the website
- *
+ * <p>
  * The identification of the relevant parts is based on the javascript from the original site as there is a similar
  * mechanism to scan the products which can be trusted as reliable solution
  */
 public class WebParser {
 
-    public JsonResponse extractProducts(StringBuilder html, Properties configuration) {
-        JsonResponse json = new JsonResponse();
+    public Tree extractProducts(StringBuilder html, Properties configuration) {
 
         String productPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCTS);
         String titlePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_NAME);
+        String pricePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_PRICE);
         String descriptionPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DESCRIPTION);
         String kcalPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_KCAL);
 
@@ -33,40 +29,7 @@ public class WebParser {
         productBox = clearComments(productBox);
         productBox = removeBlankBetweenTags(productBox);
         // this will finally generate the tree structure
-        Tree tree = generateTree(productBox);
-
-        // skim through the nodes and identify the products
-        List<Node> products = new ArrayList<>();
-
-        searchNodesByAttribute(products, tree.getNodes(), generateStackFromPattern(productPattern));
-
-        for (Node node : products) {
-            Result result = new Result();
-
-            Node title = searchSingleNodeByAttribute(node.getChildren(), generateStackFromPattern(titlePattern));
-            if(title != null) {
-                result.setTitle(title.getContent());
-            }
-
-            if(result.getTitle() != null) {
-                json.getResults().add(result);
-            }
-        }
-
-        return json;
-    }
-
-    /**
-     * Generate a stack from the provided pattern to identify a node
-     * @param pattern the pattern to transform into a stack
-     * @return the transformed stack
-     */
-    public Stack<String> generateStackFromPattern(String pattern) {
-        Stack<String> stack = new Stack<>();
-        List<String> nodeSelectors = Arrays.asList(pattern.split(" "));
-        Collections.reverse(nodeSelectors);
-        nodeSelectors.forEach(stack::push);
-        return stack;
+        return generateTree(productBox);
     }
 
     /**
@@ -97,6 +60,12 @@ public class WebParser {
 
             // open tag
             if (chr == '<') {
+
+                // check if content has already been recorded before we switch the tag
+                if (currentNode.getContent() == null && tagClosed > 0 && tagOpen == 0) {
+                    currentNode.setContent(html.substring(tagClosed, i));
+                }
+
                 if (chr2 != '/' && currentNode.getType() != null) {
                     // if the current node has already been filled we have a child node
                     Node tmp = new Node();
@@ -136,11 +105,11 @@ public class WebParser {
                     // BUG: The main html contains a bug in the generation of the html tags. the div.product within the li.gridItem is missing the closing </div> element
                     // as the browser auto-corrects this issue, it needs to be adjusted here
                     // START bug work-around
-                    if(currentNode != null && "div".equals(currentNode.getType()) && "li".equals(currentNode.getParent().getType()) && "gridItem".equals(currentNode.getParent().getAttributeMap().get("class"))
-                        && currentNode.getAttributeMap().containsKey("class") && currentNode.getAttributeMap().get("class").contains("product")) {
-                        // switch up another node to the <ul> tag
-                        currentNode = currentNode.getParent();
-                    }
+                    //if(currentNode != null && "div".equals(currentNode.getType()) && "li".equals(currentNode.getParent().getType()) && "gridItem".equals(currentNode.getParent().getAttributeMap().get("class"))
+                    //    && currentNode.getAttributeMap().containsKey("class") && currentNode.getAttributeMap().get("class").contains("product")) {
+                    // switch up another node to the <ul> tag
+                    //    currentNode = currentNode.getParent();
+                    //}
                     // END bug work-around
 
                     tagClosing = false;
@@ -268,69 +237,6 @@ public class WebParser {
         }
         html = tmpBuilder.toString();
         return html;
-    }
-
-    public Node searchSingleNodeByAttribute(List<Node> nodesToSearch, Stack<String> nodeSelector) {
-        Node retVal = null;
-        String[] selectors = nodeSelector.peek().split("=");
-        Pattern pattern = selectors.length == 3 ? Pattern.compile(selectors[2]) : null;
-        for (Node node : nodesToSearch) {
-            Map<String, String> attributeMap = node.getAttributeMap();
-            if (node.getType().matches(selectors[0]) && (selectors.length == 1 || attributeMap.containsKey(selectors[1]))) {
-                Matcher matcher = pattern != null ? pattern.matcher(attributeMap.get((selectors[1]))) : null;
-                if (matcher == null || matcher.find()) {
-                    if (nodeSelector.size() == 1) {
-                        retVal = node;
-                        break;
-                    } else {
-                        // get into next sub-node
-                        nodeSelector.pop();
-                    }
-                }
-            }
-            if (node.getChildren() != null) {
-                // might be within the children
-                retVal = searchSingleNodeByAttribute(node.getChildren(), nodeSelector);
-            }
-            if(retVal != null) {
-                break;
-            }
-        }
-        return retVal;
-    }
-
-    /**
-     * Search nodes for a specific identifier
-     * This method uses a 3-way identification string which consists of the following pattern:
-     * &lt;tag-regex&gt;=&lt;attribute&gt;=&lt;attribute-value-regex&gt;
-     *
-     * @param found         the found nodes
-     * @param nodesToSearch the nodes to iterate through
-     * @param nodeSelector  the expression to select the nodes
-     */
-    public void searchNodesByAttribute(List<Node> found, List<Node> nodesToSearch, Stack<String> nodeSelector) {
-        String[] selectors = nodeSelector.peek().split("=");
-        Pattern pattern = selectors.length == 3 ? Pattern.compile(selectors[2]) : null;
-        boolean foundNode = false;
-        for (Node node : nodesToSearch) {
-            Map<String, String> attributeMap = node.getAttributeMap();
-            if (node.getType().matches(selectors[0]) && (selectors.length == 1 || attributeMap.containsKey(selectors[1]))) {
-                Matcher matcher = pattern != null ? pattern.matcher(attributeMap.get((selectors[1]))) : null;
-                if (matcher == null || matcher.find()) {
-                    if (nodeSelector.size() == 1) {
-                        found.add(node);
-                        foundNode = true;
-                    } else {
-                        // get into next sub-node
-                        nodeSelector.pop();
-                    }
-                }
-            }
-            if (!foundNode && node.getChildren() != null) {
-                // might be within the children
-                searchNodesByAttribute(found, node.getChildren(), nodeSelector);
-            }
-        }
     }
 
 }

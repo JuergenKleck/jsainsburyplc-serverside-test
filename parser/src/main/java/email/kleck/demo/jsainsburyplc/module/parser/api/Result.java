@@ -5,10 +5,10 @@ package email.kleck.demo.jsainsburyplc.module.parser.api;
  */
 public class Result {
 
-    private String title;
+    private String title = "";
     private String kcal;
-    private Double unitPrice;
-    private String description;
+    private Double unitPrice = 0.0;
+    private String description = "";
 
     public String getTitle() {
         return title;
@@ -44,11 +44,11 @@ public class Result {
 
     @Override
     public String toString() {
-        return "Result{" +
-                "title='" + title + '\'' +
-                ", kcal='" + kcal + '\'' +
-                ", unitPrice=" + unitPrice +
-                ", description='" + description + '\'' +
+        return "{" +
+                "\"title\":\"" + title + '\"' +
+                (kcal != null ? ", \"kcal_per_100g\":" + kcal : "") +
+                ", \"unit_price\":" + unitPrice +
+                ", \"description\":\"" + description + '\"' +
                 '}';
     }
 }

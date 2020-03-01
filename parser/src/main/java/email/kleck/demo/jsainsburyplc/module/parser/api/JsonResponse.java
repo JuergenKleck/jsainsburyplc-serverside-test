@@ -29,9 +29,9 @@ public class JsonResponse {
 
     @Override
     public String toString() {
-        return "JsonResponse{" +
-                "results=" + results +
-                ", total=" + total +
+        return "{" +
+                "\"results\":" + results +
+                ", \"total\":" + total +
                 '}';
     }
 

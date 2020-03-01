@@ -23,17 +23,19 @@ public class WebParserTest {
     public void givenHtml_whenProviding_thenSearchProducts() {
         StringBuilder html = new StringBuilder();
         Properties configuration = new Properties();
+        configuration.put("global.vat","20.0");
         configuration.put("ident.products",".*=class=.*productLister.* .*=class=.*product.*");
         configuration.put("ident.product.name",".*=class=.*productInfo.* h3 a img");
+        configuration.put("ident.product.price","p=class=.*pricePerUnit.*");
 
         Path path = Paths.get("demo.html");
         Assertions.assertTrue(Files.exists(path));
         Assertions.assertDoesNotThrow(() -> html.append(new String(Files.readAllBytes(path))));
 
         WebParser parser = new WebParser();
-        JsonResponse result = parser.extractProducts(html, configuration);
-        Assertions.assertTrue(result.getResults().size() > 0);
-        result.getResults().forEach(r -> Assertions.assertNotNull(r.getTitle()));
+        Tree result = parser.extractProducts(html, configuration);
+        Assertions.assertTrue(result.getNodes().size() > 0);
+        result.getNodes().forEach(r -> Assertions.assertNotNull(r.getType()));
     }
 
     @Test
@@ -67,14 +69,16 @@ public class WebParserTest {
     public void givenNodes_whenProviding_thenSearchNodes() {
         String html = HTML_STRING_1;
         WebParser parser = new WebParser();
+        Transformer transformer = new Transformer();
         Tree tree = parser.generateTree(html);
         List<Node> found = new ArrayList<>();
         String nodeSelector = ".*=class=.*moreclasses.*";
+
         Stack<String> stack = new Stack<>();
         List<String> nodeSelectors = Arrays.asList(nodeSelector.split(" "));
         Collections.reverse(nodeSelectors);
         nodeSelectors.forEach(e -> stack.push(e));
-        parser.searchNodesByAttribute(found, tree.getNodes(), stack);
+        transformer.searchNodesByAttribute(found, tree.getNodes(), stack);
         Assertions.assertFalse(found.isEmpty());
         Assertions.assertNotNull(found.get(0).getType());
     }
