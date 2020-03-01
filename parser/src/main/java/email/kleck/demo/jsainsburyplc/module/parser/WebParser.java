@@ -1,10 +1,12 @@
 package email.kleck.demo.jsainsburyplc.module.parser;
 
 import email.kleck.demo.jsainsburyplc.module.config.ConfigConstants;
+import email.kleck.demo.jsainsburyplc.module.parser.connector.WebConnector;
 import email.kleck.demo.jsainsburyplc.module.parser.internal.Node;
 import email.kleck.demo.jsainsburyplc.module.parser.internal.Tree;
 
-import java.util.Properties;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * The entry class to parse the website
@@ -14,13 +16,19 @@ import java.util.Properties;
  */
 public class WebParser {
 
-    public Tree extractProducts(StringBuilder html, Properties configuration) {
+    /**
+     * Extract the products based on the configuration patterns from the html string
+     *
+     * @param html          the html string to process
+     * @param configuration the configuration parameters
+     * @param doDeepLink    if deep links should be processed
+     * @return the tree object
+     */
+    public Tree createTree(StringBuilder html, Properties configuration, boolean doDeepLink) {
 
+        String deepLinkPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DEEPLINK);
         String productPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCTS);
-        String titlePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_NAME);
-        String pricePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_PRICE);
-        String descriptionPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DESCRIPTION);
-        String kcalPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_KCAL);
+        String url = configuration.getProperty(ConfigConstants.PARAM_TARGET_URL);
 
         // Followed are transformations to skip unrelevant parts of the website
         String productBox = html.toString();
@@ -29,7 +37,71 @@ public class WebParser {
         productBox = clearComments(productBox);
         productBox = removeBlankBetweenTags(productBox);
         // this will finally generate the tree structure
-        return generateTree(productBox);
+        Tree tree = generateTree(productBox);
+
+        if (doDeepLink) {
+            List<Node> products = new ArrayList<>();
+            List<Node> deepLinkNodes = new ArrayList<>();
+            ParserUtil.searchNodesByAttribute(products, tree.getNodes(), ParserUtil.generateStackFromPattern(productPattern));
+            ParserUtil.searchNodesByAttribute(deepLinkNodes, products, ParserUtil.generateStackFromPattern(deepLinkPattern));
+            WebConnector connector = new WebConnector();
+
+            for (Node node : deepLinkNodes) {
+                // skip empty nodes
+                if (node.getContent() == null || node.getContent().isEmpty()) {
+                    continue;
+                }
+                StringBuilder contents = new StringBuilder();
+                try {
+                    contents.append(connector.readWebsite(constructDeepLinkURL(url, node.getAttributeMap().get("href"))).toString());
+                    Tree subTree = createTree(contents, configuration, false);
+                    node.setSubTree(subTree);
+                } catch (IOException e) {
+                    // ignore this exception
+                }
+            }
+        }
+
+        return tree;
+    }
+
+    /**
+     * This method constructs the correct deep link url
+     *
+     * @param baseUrl  the base url of the base
+     * @param deepLink the deep link to the product details
+     * @return the correct deep link url
+     */
+    public String constructDeepLinkURL(String baseUrl, String deepLink) {
+        StringBuilder url = new StringBuilder(baseUrl.substring(0, baseUrl.indexOf("//") + 2));
+
+        Stack<String> baseStack = new Stack<>();
+        Arrays.asList(baseUrl.substring(baseUrl.indexOf("//") + 2).split("/")).forEach(baseStack::push);
+        Stack<String> deepLinkStack = new Stack<>();
+        List<String> deepLinkArr = Arrays.asList(deepLink.split("/"));
+        Collections.reverse(deepLinkArr);
+        deepLinkArr.forEach(deepLinkStack::push);
+
+        // remove the latest baseurl entry as it is not needed
+        baseStack.pop();
+        while (!deepLinkStack.empty()) {
+            String part = deepLinkStack.pop();
+            if ("..".equals(part)) {
+                baseStack.pop();
+            } else {
+                baseStack.push(part);
+            }
+        }
+
+        Iterator<String> baseIter = baseStack.iterator();
+        while (baseIter.hasNext()) {
+            url.append(baseIter.next());
+            if (baseIter.hasNext()) {
+                url.append('/');
+            }
+        }
+
+        return url.toString();
     }
 
     /**

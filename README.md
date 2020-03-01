@@ -9,6 +9,8 @@ It is a multi-module Maven project which processes a specific website for produc
 
 ## Building
 
+### Default build
+
 In order to build the application run the following command from the project root folder:
 
 ```
@@ -18,6 +20,22 @@ mvn -e clean package
 In the projects sub-folder `application/target` is the main application which can be executed. 
 Along-side the application is a configuration file `config.properties` which contains the URL and various parameters
 to adjust the information extraction process.
+
+### Build without test
+
+In order to purely build the applicatin and skip the testing run the following command:
+
+```
+mvn -e clean package -Dmaven.test.skip=true
+```
+
+## Testing
+
+In order to execute the tests separately run the following command from the project root folder:
+
+```
+mvn test
+```
 
 ## Execution
 

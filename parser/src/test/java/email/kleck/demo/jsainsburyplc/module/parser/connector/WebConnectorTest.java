@@ -18,9 +18,15 @@ class WebConnectorTest {
     }
 
     @Test
-    public void givenConfig_whenConnecting_returnException() {
+    public void givenInvalidConfig_whenConnecting_returnException() {
         WebConnector connector = new WebConnector();
         Assertions.assertThrows(IOException.class, () -> connector.readWebsite("null"));
+    }
+
+    @Test
+    public void givenInvalidConfig_whenConnecting_returnException_2() {
+        WebConnector connector = new WebConnector();
+        Assertions.assertThrows(IOException.class, () -> connector.readWebsite("https://does.not.exist/somepage.html"));
     }
 
 

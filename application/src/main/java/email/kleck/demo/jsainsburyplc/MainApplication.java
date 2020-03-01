@@ -28,7 +28,7 @@ public class MainApplication {
             Transformer transformer = new Transformer();
 
             contents.append(connector.readWebsite(properties.getProperty(ConfigConstants.PARAM_TARGET_URL)).toString());
-            Tree tree = parser.extractProducts(contents, properties);
+            Tree tree = parser.createTree(contents, properties, true);
             JsonResponse result = transformer.transformTree(tree, properties);
             System.out.println(result.toString());
         } catch (IOException e) {
