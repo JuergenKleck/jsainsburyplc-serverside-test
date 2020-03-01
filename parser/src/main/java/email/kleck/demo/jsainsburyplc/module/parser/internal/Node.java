@@ -19,6 +19,9 @@ public class Node {
     private List<Node> children = new ArrayList<>();
     private Node parent = null;
 
+    // the sub tree can contain a deep-linked site
+    private Tree subTree = null;
+
     public Node() {
     }
 
@@ -66,14 +69,43 @@ public class Node {
         this.content = content;
     }
 
+    public Tree getSubTree() {
+        return subTree;
+    }
+
+    public void setSubTree(Tree subTree) {
+        this.subTree = subTree;
+    }
+
     public Map<String, String> getAttributeMap() {
         Map<String, String> map = new HashMap<>();
         if (this.attributes != null && !this.attributes.trim().isEmpty()) {
-            Pattern pattern = Pattern.compile("\\s*([a-zA-Z]+)\\=\"(.+)\".*");
-            Matcher matcher = pattern.matcher(this.attributes.trim());
-            if (matcher.find()) {
-                for (int i = 0; i < matcher.groupCount(); i += 2) {
-                    map.put(matcher.group(i + 1).trim(), matcher.group(i + 2).trim());
+            String key = null;
+            for (int i = 0, k = -1, v = -1; i < this.attributes.length(); i++) {
+                // key start
+                if (this.attributes.charAt(i) != '=' && this.attributes.charAt(i) != ' ' && k == -1 && key == null) {
+                    k = i;
+                }
+                // key+value pair
+                if (this.attributes.charAt(i) == '=' && k > -1) {
+                    key = this.attributes.substring(k, i);
+                    k = -1;
+                }
+                // standalone key
+                if (this.attributes.charAt(i) == ' ' && k > -1) {
+                    map.put(this.attributes.substring(k, i), null);
+                    k = -1;
+                }
+                // value opening
+                if (this.attributes.charAt(i) == '"' && v == -1 && key != null) {
+                    v = i + 1;
+                } else if (this.attributes.charAt(i) == '"' && v > -1 && key != null) {
+                    // value closing
+                    if (v < i) {
+                        map.put(key, this.attributes.substring(v, i));
+                    }
+                    v = -1;
+                    key = null;
                 }
             }
         }

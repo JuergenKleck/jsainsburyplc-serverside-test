@@ -8,9 +8,10 @@ import email.kleck.demo.jsainsburyplc.module.parser.internal.Tree;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Currency;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Transformer class which converts the tree into the json response
@@ -26,30 +27,58 @@ public class Transformer {
      */
     public JsonResponse transformTree(Tree tree, Properties configuration) {
 
-        Double vat = Double.valueOf(configuration.getProperty(ConfigConstants.GLOBAL_VAT));
+        double vat = Double.parseDouble(configuration.getProperty(ConfigConstants.GLOBAL_VAT));
         String productPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCTS);
         String titlePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_NAME);
         String pricePattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_PRICE);
         String descriptionPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DESCRIPTION);
+        String descriptionAltPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DESCRIPTION_ALT);
         String kcalPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_KCAL);
+        String kcalAltPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_KCAL_ALT);
+        String deepLinkPattern = configuration.getProperty(ConfigConstants.PARAM_IDENT_PRODUCT_DEEPLINK);
 
         JsonResponse json = new JsonResponse();
 
         // skim through the nodes and identify the products
         List<Node> products = new ArrayList<>();
 
-        searchNodesByAttribute(products, tree.getNodes(), generateStackFromPattern(productPattern));
+        ParserUtil.searchNodesByAttribute(products, tree.getNodes(), ParserUtil.generateStackFromPattern(productPattern));
 
         for (Node node : products) {
             Result result = new Result();
 
-            Node title = searchSingleNodeByAttribute(node.getChildren(), generateStackFromPattern(titlePattern));
+            Node title = ParserUtil.searchSingleNodeByAttribute(node.getChildren(), ParserUtil.generateStackFromPattern(titlePattern));
             if (title != null) {
-                result.setTitle(title.getContent());
+                result.setTitle(title.getContent().trim());
             }
-            Node price = searchSingleNodeByAttribute(node.getChildren(), generateStackFromPattern(pricePattern));
+            Node price = ParserUtil.searchSingleNodeByAttribute(node.getChildren(), ParserUtil.generateStackFromPattern(pricePattern));
             if (price != null) {
                 result.setUnitPrice(convertToDouble(price.getContent()));
+            }
+
+            Node deepLinkNode = ParserUtil.searchSingleNodeByAttribute(node.getChildren(), ParserUtil.generateStackFromPattern(deepLinkPattern));
+            if (deepLinkNode != null && deepLinkNode.getSubTree() != null) {
+                Node kcalNode = ParserUtil.searchSingleNodeByAttribute(deepLinkNode.getSubTree().getNodes(), ParserUtil.generateStackFromPattern(kcalPattern));
+                if (kcalNode != null && kcalNode.getContent() != null && !kcalNode.getContent().isEmpty()) {
+                    result.setKcal(kcalNode.getContent().replaceAll("[^\\d]*", ""));
+                } else {
+                    // try the alternative pattern
+                    kcalNode = ParserUtil.searchSingleNodeByAttribute(deepLinkNode.getSubTree().getNodes(), ParserUtil.generateStackFromPattern(kcalAltPattern));
+                    if (kcalNode != null) {
+                        result.setKcal(kcalNode.getContent().replaceAll("[^\\d]*", ""));
+                    }
+                }
+
+                Node longDescNode = ParserUtil.searchSingleNodeByAttribute(deepLinkNode.getSubTree().getNodes(), ParserUtil.generateStackFromPattern(descriptionPattern));
+                if (longDescNode != null && longDescNode.getContent() != null && !longDescNode.getContent().isEmpty()) {
+                    result.setDescription(longDescNode.getContent());
+                } else {
+                    // try the alternative pattern
+                    longDescNode = ParserUtil.searchSingleNodeByAttribute(deepLinkNode.getSubTree().getNodes(), ParserUtil.generateStackFromPattern(descriptionAltPattern));
+                    if (longDescNode != null) {
+                        result.setDescription(longDescNode.getContent().trim());
+                    }
+                }
             }
 
             if (result.getTitle() != null) {
@@ -85,8 +114,8 @@ public class Transformer {
      * @return rounded value
      */
     public Double convertToDouble(String content) {
-        Double result = 0.0;
-        if (content != null) {
+        double result = 0.0;
+        if (content != null && !content.isEmpty()) {
             String value = content.trim();
             value = value.replaceAll("[^\\d.]+", "");
             Currency currency = Currency.getInstance("GBP");
@@ -97,81 +126,5 @@ public class Transformer {
         return result;
     }
 
-    /**
-     * Generate a stack from the provided pattern to identify a node
-     *
-     * @param pattern the pattern to transform into a stack
-     * @return the transformed stack
-     */
-    public Stack<String> generateStackFromPattern(String pattern) {
-        Stack<String> stack = new Stack<>();
-        List<String> nodeSelectors = Arrays.asList(pattern.split(" "));
-        Collections.reverse(nodeSelectors);
-        nodeSelectors.forEach(stack::push);
-        return stack;
-    }
 
-
-    public Node searchSingleNodeByAttribute(List<Node> nodesToSearch, Stack<String> nodeSelector) {
-        Node retVal = null;
-        String[] selectors = nodeSelector.peek().split("=");
-        Pattern pattern = selectors.length == 3 ? Pattern.compile(selectors[2]) : null;
-        for (Node node : nodesToSearch) {
-            Map<String, String> attributeMap = node.getAttributeMap();
-            if (node.getType().matches(selectors[0]) && (selectors.length == 1 || attributeMap.containsKey(selectors[1]))) {
-                Matcher matcher = pattern != null ? pattern.matcher(attributeMap.get((selectors[1]))) : null;
-                if (matcher == null || matcher.find()) {
-                    if (nodeSelector.size() == 1) {
-                        retVal = node;
-                        break;
-                    } else {
-                        // get into next sub-node
-                        nodeSelector.pop();
-                    }
-                }
-            }
-            if (node.getChildren() != null) {
-                // might be within the children
-                retVal = searchSingleNodeByAttribute(node.getChildren(), nodeSelector);
-            }
-            if (retVal != null) {
-                break;
-            }
-        }
-        return retVal;
-    }
-
-    /**
-     * Search nodes for a specific identifier
-     * This method uses a 3-way identification string which consists of the following pattern:
-     * &lt;tag-regex&gt;=&lt;attribute&gt;=&lt;attribute-value-regex&gt;
-     *
-     * @param found         the found nodes
-     * @param nodesToSearch the nodes to iterate through
-     * @param nodeSelector  the expression to select the nodes
-     */
-    public void searchNodesByAttribute(List<Node> found, List<Node> nodesToSearch, Stack<String> nodeSelector) {
-        String[] selectors = nodeSelector.peek().split("=");
-        Pattern pattern = selectors.length == 3 ? Pattern.compile(selectors[2]) : null;
-        boolean foundNode = false;
-        for (Node node : nodesToSearch) {
-            Map<String, String> attributeMap = node.getAttributeMap();
-            if (node.getType().matches(selectors[0]) && (selectors.length == 1 || attributeMap.containsKey(selectors[1]))) {
-                Matcher matcher = pattern != null ? pattern.matcher(attributeMap.get((selectors[1]))) : null;
-                if (matcher == null || matcher.find()) {
-                    if (nodeSelector.size() == 1) {
-                        found.add(node);
-                        foundNode = true;
-                    } else {
-                        // get into next sub-node
-                        nodeSelector.pop();
-                    }
-                }
-            }
-            if (!foundNode && node.getChildren() != null) {
-                // might be within the children
-                searchNodesByAttribute(found, node.getChildren(), nodeSelector);
-            }
-        }
-    }
 }

@@ -15,16 +15,8 @@ public class JsonResponse {
         return results;
     }
 
-    public void setResults(List<Result> results) {
-        this.results = results;
-    }
-
     public Total getTotal() {
         return total;
-    }
-
-    public void setTotal(Total total) {
-        this.total = total;
     }
 
     @Override

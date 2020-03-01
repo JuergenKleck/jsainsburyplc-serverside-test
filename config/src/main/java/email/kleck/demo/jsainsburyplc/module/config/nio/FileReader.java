@@ -1,6 +1,8 @@
 package email.kleck.demo.jsainsburyplc.module.config.nio;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.*;
 import java.util.Properties;
 
@@ -26,7 +28,19 @@ public final class FileReader {
                 throw new FileSystemException("Error while processing file: " + fileName);
             }
         } else {
-            throw new NoSuchFileException("File " + fileName + " does not exist");
+            // Load from classpath, this is also used in JUnit
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL resource = classLoader.getResource(fileName);
+            if (resource != null) {
+                try {
+                    File file = new File(resource.getFile());
+                    readFile(Paths.get(file.getAbsolutePath()));
+                } catch (IOException e) {
+                    throw new FileSystemException("Error while processing file: " + fileName);
+                }
+            } else {
+                throw new NoSuchFileException("File " + fileName + " does not exist");
+            }
         }
     }
 
